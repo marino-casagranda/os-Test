@@ -1,15 +1,14 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <MultiStepForm />
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import MultiStepForm from './components/MultiStepForm.vue'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    MultiStepForm
   }
 }
 </script>
