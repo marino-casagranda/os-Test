@@ -43,16 +43,28 @@
           <p>Quel est votre lieu de résidence ? (npa localité)</p>
           <input type="text" v-model="form.residence" />
           <button @click="prevStep">Précédent</button>
-          <button type="submit">Terminer</button>
+          <button @click="nextStep">Calculer</button>
         </div>
 
-        
+        <LoadingAnimation v-if="step === 6" @animation-done="handleAnimationDone" />
+
+        <div v-if="step === 7">
+            <h2>Vous pourrez obtenir un capital de {{ calculatedCapital }} CHF</h2>
+            <input type="email" v-model="form.email" placeholder="Votre e-mail" required />
+            <input type="tel" v-model="form.phoneNumber" placeholder="Votre numéro de téléphone" required />
+            <button type="submit" @click="submitForm">Découvrir mes offres</button>
+        </div>
+
       </form>
     </div>
   </template>
   
   <script>
+  import LoadingAnimation from './LoadingAnimation.vue';
   export default {
+    components: {
+        LoadingAnimation
+    },
     data() {
       return {
         currentYear: new Date().getFullYear(),
@@ -62,20 +74,35 @@
           gender: null,
           monthlySavings: 0,
           birthYear: null,
-          residence: ''
+          residence: '',
+          email : '',
+          phoneNumber: ''
         }
       };
     },
 
     computed: {
         isValidBirthYear() {
-        return (year) => year && year <= this.currentYear && year >= this.currentYear - 100;
+            return (year) => year && year <= this.currentYear && year >= this.currentYear - 100;
+        },
+
+        calculatedCapital() {
+            const currentYear = new Date().getFullYear();
+            const age = currentYear - this.form.birthYear;
+            const retirementAge = this.form.gender === 'femme' ? 64 : 65;
+            const yearsToRetirement = retirementAge - age;
+            const interestRate = 0.05;
+            let capital = 0;
+            for (let i = 0; i < yearsToRetirement; i++) {
+                capital = (capital + this.form.monthlySavings * 12) * (1 + interestRate);
+            }
+            return capital.toFixed(2);
         }
     },
 
     methods: {
       nextStep() {
-        if (this.step < 5) {
+        if (this.step < 10) {
           this.step++;
         }
       },
@@ -85,13 +112,41 @@
         }
       },
       submitForm() {
-        // Here you would handle the form submission,
-        // for now, we'll just log the form data to the console.
-        console.log(this.form);
-      }
+        let formData = {
+        thirdPillar: this.form.thirdPillar,
+        gender: this.form.gender,
+        monthlySavings: this.form.monthlySavings,
+        birthYear: this.form.birthYear,
+        residence: this.form.residence,
+        email: this.form.email,
+        phoneNumber: this.form.phoneNumber,
+        calculatedCapital: this.calculatedCapital
+        };
+
+        fetch('https://emedias.ch/sendEmail.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+        console.log(data);
+        })
+        .catch(error => {
+        console.error('Error:', error);
+        });
+      },
+
+      handleAnimationDone() {
+        this.step = 7;
+    },
     }
   };
   </script>
+
+
 
 <style>
 .form-container {
